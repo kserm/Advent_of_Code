@@ -45,6 +45,18 @@ def check_rules(number: int, rules_dict: dict, num_list: list) -> list:
     res.append(il2)
     return res
 
+def check_page_numbers(l: list) -> bool:
+    res = True
+    total = 0
+    for i in l:
+        indxs = check_rules(i, rules, l)
+        t1 = sum(indxs[0])
+        t2 = sum(indxs[0])
+        total += t1 + t2
+    if total == 0:
+        res = False
+    return res
+
 def swap_positions(num1: int, num2: int, num_list: list):
     a, b = num_list.index(num1), num_list.index(num2)
     num_list[b], num_list[a] = num_list[a], num_list[b]
@@ -74,11 +86,9 @@ for i in range(len(page_numbers_copy)):
             updated_pages.append(page_numbers[i])
             break
 
-# Oh, this is so stupid...
 for item in page_numbers:
-    update_numbers(rules, item)
-    update_numbers(rules, item)
-    update_numbers(rules, item)
+    while check_page_numbers(item):
+        update_numbers(rules, item)
 
 total = 0
 
