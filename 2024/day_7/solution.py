@@ -1,9 +1,6 @@
 import os
-from itertools import product
 
 data = []
-
-operators = ['+', '*']
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -13,25 +10,24 @@ with open(f'{dir_path}/input.txt', 'r') as file:
         values = line.split(':')[1].strip().split()
         data.append((key, values))
 
-total = 0
-for equation in data:
-    key = equation[0]
-    values = equation[1]
-    repeat_times = len(values) - 1
-    operators_comb = list(product(operators, repeat=repeat_times))
+def recursive_check(goal: int, numbers: list, index: int = 1, current_result: int = None) -> int:
+    if current_result == None:
+        current_result = numbers[0]
+    if index == len(numbers):
+        return goal if current_result == goal else 0
+    next_number = numbers[index]
+    addition = recursive_check(goal, numbers, index+1, current_result+next_number)
+    if addition:
+        return addition
+    multiplication = recursive_check(goal, numbers, index+1, current_result*next_number)
+    if multiplication:
+        return multiplication
+    return 0
 
-    for item in operators_comb:
-        res = 0
-        num1 = values[0]
-        for i in range(len(item)):
-            num2 = values[i+1]
-            if item[i] == '+':
-                res = int(num1)+int(num2)
-            elif item[i] == '*':
-                res = int(num1)*int(num2)
-            num1 = res
-        if res == key:
-            total += key
-            break
+total = 0
+for item in data:
+    key = item[0]
+    values = [int(v) for v in item[1]]
+    total += recursive_check(key, values)
 
 print(total)
