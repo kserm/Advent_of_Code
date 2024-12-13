@@ -24,16 +24,15 @@ for j in range(files[-1]):
 
 for i in range(len(blocks)):
     if blocks[i] == '.':
-        for j in range(len(blocks)-1, 0, -1):
-            if blocks[j] != '.' and i < j:
+        for j in range(len(blocks)-1, i+1, -1):
+            if blocks[j] != '.':
                 blocks[i], blocks[j] = blocks[j], blocks[i]
                 break
 
-while blocks[-1] == '.':
-    blocks.pop()
-
 checksum = 0
 for i in range(len(blocks)):
+    if blocks[i] == '.':
+        break
     checksum += i * blocks[i]
 
 print(checksum)
