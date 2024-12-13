@@ -1,4 +1,5 @@
 import os
+from collections import deque
 
 data = []
 
@@ -68,39 +69,30 @@ for y in range(max_y+1):
         else:
             garden_plots[plot].append((y, x))
 
+def is_adjacent(coord1, coord2: tuple) -> bool:
+    y1, x1 = coord1
+    y2, x2 = coord2
+    return (abs(y1 - y2) == 1 and x1 == x2) or (y1 == y2 and abs(x1 - x2) == 1)
 
-def is_adjacent(position: tuple, positions: list) -> bool:
-    y1, x1 = position
-    for p in positions:
-        y2, x2 = p
-        if ((abs(y2-y1)==1) and (abs(x2-x1)==0)) or ((abs(y2-y1)==0) and (abs(x2-x1)==1)):
-            return True
-    return False
+def find_adjacent(positions):
+    positions_set = set(positions)
+    groups = []
 
+    while positions_set:
+        current_group = []
+        queue = deque([positions_set.pop()])
 
-processed = set()
-# TODO: optimize this
-def find_adjacent(positions: list) -> list:
-    res = []
-    max_counts = len(positions) - 1
-    for i in positions:
-        if i in processed:
-            continue
-        flag = True
-        counter = 0
-        res.append([])
-        res[-1].append(i)
-        processed.add(i)
-        while flag:
-            if counter > 20*max_counts:
-                flag = False
-            for j in positions:
-                if (is_adjacent(j, res[-1])) and (j not in processed):
-                    res[-1].append(j)
-                    processed.add(j)
-                else:
-                    counter += 1
-    return res
+        while queue:
+            coord = queue.popleft()
+            current_group.append(coord)
+
+            neighbors = [(coord[0] + dy, coord[1] + dx) for dy, dx in [(0, 1), (1, 0), (0, -1), (-1, 0)]]
+            for neighbor in neighbors:
+                if neighbor in positions_set:
+                    queue.append(neighbor)
+                    positions_set.remove(neighbor)
+        groups.append(sorted(current_group))
+    return groups
 
 total = 0
 for key, value in garden_plots.items():

@@ -1,4 +1,5 @@
 import os
+from collections import deque
 
 data = []
 
@@ -7,25 +8,6 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 with open(f"{dir_path}/input.txt", "r") as file:
     for line in file.readlines():
         data.append(list(line.strip()))
-
-test_str = """
-RRRRIICCFF
-RRRRIICCCF
-VVRRRCCFFF
-VVRCCCJFFF
-VVVVCJJCFE
-VVIVCCJJEE
-VVIIICJJEE
-MIIIIIJJEE
-MIIISIJEEE
-MMMISSJEEE
-"""
-
-test_data = []
-for l in test_str.strip().split("\n"):
-    test_data.append(list(l.strip()))
-
-data = test_data
 
 max_y = len(data) - 1
 max_x = len(data[0]) - 1
@@ -87,89 +69,83 @@ for y in range(max_y+1):
         else:
             garden_plots[plot].append((y, x))
 
-def is_adjacent(position: tuple, positions: list) -> bool:
-    y1, x1 = position
-    for p in positions:
-        y2, x2 = p
-        if ((abs(y2-y1)==1) and (abs(x2-x1)==0)) or ((abs(y2-y1)==0) and (abs(x2-x1)==1)):
-            return True
-    return False
+def is_adjacent(coord1, coord2: tuple) -> bool:
+    y1, x1 = coord1
+    y2, x2 = coord2
+    return (abs(y1 - y2) == 1 and x1 == x2) or (y1 == y2 and abs(x1 - x2) == 1)
 
-processed = set()
-# TODO: optimize this
-def find_adjacent(positions: list) -> list:
-    res = []
-    max_counts = len(positions) - 1
-    for i in positions:
-        if i in processed:
-            continue
-        flag = True
-        counter = 0
-        res.append([])
-        res[-1].append(i)
-        processed.add(i)
-        while flag:
-            if counter > 20*max_counts:
-                flag = False
-            for j in positions:
-                if (is_adjacent(j, res[-1])) and (j not in processed):
-                    res[-1].append(j)
-                    processed.add(j)
+def find_adjacent(positions):
+    positions_set = set(positions)
+    groups = []
+
+    while positions_set:
+        current_group = []
+        queue = deque([positions_set.pop()])
+
+        while queue:
+            coord = queue.popleft()
+            current_group.append(coord)
+
+            neighbors = [(coord[0] + dy, coord[1] + dx) for dy, dx in [(0, 1), (1, 0), (0, -1), (-1, 0)]]
+            for neighbor in neighbors:
+                if neighbor in positions_set:
+                    queue.append(neighbor)
+                    positions_set.remove(neighbor)
+        groups.append(sorted(current_group))
+    return groups
+
+def check_sides(check_dir: str, positions: dict) -> int:
+    if check_dir == "U":
+        cd = check_up
+    elif check_dir == "D":
+        cd = check_down
+    elif check_dir == "L":
+        cd = check_left
+    elif check_dir == "R":
+        cd = check_right
+    
+    sides = 0
+    if check_dir in ["U", "D"]:
+        for k in positions:
+            y = k
+            flag = True
+            lx = -1
+            for x in positions[k]:
+                name = data[y][x]
+                check = cd(name, y, x)
+                dx = x - lx
+                if not check:
+                    if flag or (dx>1):
+                        sides += 1
+                    flag = False
                 else:
-                    counter += 1
-    return res
+                    flag = True
+                lx = x
+    elif check_dir in ["L", "R"]:
+        for k in positions:
+            x = k
+            flag = True
+            ly = -1
+            for y in positions[k]:
+                name = data[y][x]
+                check = cd(name, y, x)
+                dy = y - ly
+                if not check:
+                    if flag or (dy>1):
+                        sides += 1
+                    flag = False
+                else:
+                    flag = True
+                ly = y
+    return sides
 
-def split_list(l: list) -> list:
-    res = []
-    indxs = []
-    for i in range(len(l)-1):
-        a, b = l[i], l[i+1]
-        if abs(b-a) > 1:
-            indxs.append(i+1)
-    if indxs:
-        last = 0
-        for j in indxs:
-            last = j
-            res.append(l[:last])
-        res.append(l[last:])
-        return res
-    else:
-        return [l]
-
-def list_for_dict(l: list) -> list:
-    res = []
-    if len(l) == 1:
-        res = [l[0], l[0]]
-    else:
-        res = [l[0], l[-1]]
-    return res
-
-def get_sides(a, b: int, l: list) -> dict:
+def list_to_dict(a, b: int, l: list) -> dict:
     res = {}
-    tmp = {}
-    srt_l = sorted(l)
-    for i in srt_l:
-        if i[a] in res:
-            res[i[a]].append(i[b])
+    for v in l:
+        if v[a] in res:
+            res[v[a]].append(v[b])
         else:
-            res[i[a]] = [i[b]]
-    for k in res:
-        if len(res[k]) == 1:
-            tmp[k] = [[res[k][0], res[k][0]]]
-        else:
-            tmp_lst = split_list(res[k])
-            if len(tmp_lst) == 1:
-                if k in tmp:
-                    tmp[k].append(list_for_dict(tmp_lst[0]))
-                else:
-                    tmp[k] = [list_for_dict(tmp_lst[0])]
-            else:
-                for item in tmp_lst:
-                    if k in tmp:
-                        tmp[k].append(list_for_dict(item))
-                    else:
-                        tmp[k] = [list_for_dict(item)]
-    res = tmp
+            res[v[a]] = [v[b]]
     return res
 
 total = 0
@@ -178,29 +154,14 @@ for key, value in garden_plots.items():
     for i in f:
         blocks = 0
         area = len(i)
-        print(key, i)
-        hor = get_sides(0, 1, i)
-        vert = get_sides(1, 0, i)
-        print(hor)
-        for k, v in hor.items():
-            for h in v:
-                if (not check_up(key, k, h[0])) or (not check_up(key, k, h[1])):
-                    blocks += 1
-                    print(k, h, check_up(key, k, h[0]), check_up(key, k, h[1]), blocks)
-                if (not check_down(key, k, h[0])) or (not check_down(key, k, h[1])):
-                    blocks += 1
-                    print(k, h, check_down(key, k, h[0]), check_down(key, k, h[1]), blocks)
-        print(vert)
-        for k, v in vert.items():
-            for vrt in v:
-                if (not check_left(key, vrt[0], k)) or (not check_left(key, vrt[1], k)):
-                    blocks += 1
-                    print(k, h, check_left(key, vrt[0], k), check_left(key, vrt[1], k), blocks)
-                if (not check_right(key, vrt[0], k)) or (not check_right(key, vrt[1], k)):
-                    blocks += 1
-                    print(k, h, check_right(key, vrt[0], k), check_right(key, vrt[1], k), blocks)
-        print(area, blocks)
-        print(40*"###")
+        rows = list_to_dict(0, 1, i)
+        columns = list_to_dict(1, 0, i)
+        
+        blocks += check_sides("U", rows)
+        blocks += check_sides("D", rows)
+        blocks += check_sides("L", columns)
+        blocks += check_sides("R", columns)
+        
         total += area * blocks
 
 print(total)          
