@@ -1,4 +1,5 @@
 import os
+import time
 
 walls = set()
 boxes = []
@@ -35,14 +36,19 @@ with open(f"{dir_path}/input.txt", "r") as file:
             elif c == "<":
                 movements.append((0, -1))
 
-def find_nearest_wall(pos: tuple, direction: tuple) -> tuple:
-    inc_y, inc_x = direction
-    y, x = pos
-    while True:
-        y += inc_y
-        x += inc_x
-        if (y, x) in walls:
-            return y, x
+def draw_map(robot: tuple):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    for y in range(max_y):
+        for x in range(max_x):
+            if (y, x) in walls:
+                print("#", end="")
+            elif (y, x) in boxes:
+                print("O", end="")
+            elif (y, x) == robot:
+                print("@", end="")
+            else:
+                print(".", end="")
+        print()
 
 def is_box_adjacent(position: tuple, direction: tuple) -> bool:
     y, x = position
@@ -97,16 +103,8 @@ for move in movements:
             robot = (ny, nx)
     else:
         robot = (ny, nx)
-
-# for y in range(max_y):
-#     for x in range(max_x):
-#         if (y, x) in walls:
-#             print("#", end="")
-#         elif (y, x) in boxes:
-#             print("O", end="")
-#         else:
-#             print(".", end="")
-#     print()
+    # draw_map(robot)
+    # time.sleep(1)
 
 total = 0
 for box in boxes:
