@@ -10,9 +10,6 @@ with open(f"{dir_path}/input.txt", "r") as file:
     towels = chunks[0].strip().split(", ")
     designs = chunks[1].strip().split("\n")
 
-# test_towels = ["r", "wr", "b", "g", "bwu", "rb", "gb", "br"]
-# test_designs = ["brwrr", "bggr", "gbbr", "rrbgbr", "ubwu", "bwurrg", "brgr", "bbrgwb"]
-
 def find_match(design: str) -> bool:
     matches = []
     for t in towels:
@@ -34,7 +31,7 @@ def find_match(design: str) -> bool:
                     r = res + t
                     item = [d, r]
                     if item not in tmp_m:
-                        tmp_m.append([d, r])
+                        tmp_m.append(item)
         matches = tmp_m
     if not matches:
         return False
