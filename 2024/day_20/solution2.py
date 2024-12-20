@@ -66,80 +66,30 @@ while len(visited) < max_v:
             visited.add(position)
 
 def calc_cheat(pos1, pos2: tuple) -> int:
-    if (pos1 in spt) and (pos2 in spt):
-        d1 = spt[pos1][1]
-        d2 = spt[pos2][1]
-        delta_d = d2 - d1
-        y1, x1 = pos1
-        y2, x2 = pos2
-        cheat = abs((abs(y1) - abs(y2)) + (abs(x1) - abs(x2)))
-        if cheat < delta_d:
-            return delta_d - cheat
-    return None
-
-def in_boundaries(pos: tuple) -> bool:
-    y, x = pos
-    if (0 <= y <= max_y - 1) and (0 <= x <= max_x - 1):
-        return True
-    return False
-
-def scan_area(pos: tuple, rng: int) -> list:
-    preres = []
-    for i in range(rng):
-        mx = i
-        my = rng - mx - 1
-        for y in range(my + 1):
-            for x in range(mx + 1):
-                if (y, x) not in preres:
-                    preres.append((y, x))
-                if (y, -x) not in preres:
-                    preres.append((y, -x))
-                if (-y, x) not in preres:
-                    preres.append((-y, x))
-                if (-y, -x) not in preres:
-                    preres.append((-y, -x))
-    y1, x1 = pos
-    res = []
-    for p in preres:
-        y2, x2 = p
-        np = y2 + y1, x2 + x1
-        if in_boundaries(np) and np != pos and np not in walls:
-            res.append(np)
-    return res
-
-def scan_shortcuts(position: tuple) -> list:
-    res = []
-    sa = scan_area(position, 20)
-    for pos in sa:
-        cc = calc_cheat(position, pos)
-        if cc:
-            res.append(cc)
-    return res
-
-# pos = (7, 7)
-# sa = scan_area(pos, 20)
-
-# for y in range(max_y):
-#     for x in range(max_x):
-#         if (y, x) in walls:
-#             print("#", end="")
-#         elif (y, x) in sa:
-#             print("O", end="")
-#         else:
-#             print(".", end="")
-#     print()
+    d1 = spt[pos1][1]
+    d2 = spt[pos2][1]
+    delta_d = d2 - d1
+    y1, x1 = pos1
+    y2, x2 = pos2
+    cheat = abs(x2- x1) + abs(y2 - y1)
+    return delta_d - cheat 
 
 total = {}
-for pos in spt:
-    ss = scan_shortcuts(pos)
-    for s in ss:
-        if s in total:
-            total[s] += 1
-        else:
-            total[s] = 1
+for pos1 in spt:
+    for pos2 in spt:
+        if pos1 != pos2:
+            y1, x1 = pos1
+            y2, x2 = pos2
+            md = (abs(x2 - x1) + abs(y2 - y1))
+            if md <= 20:
+                cc = calc_cheat(pos1, pos2)
+                if cc in total:
+                    total[cc] += 1
+                else:
+                    total[cc] = 1
 
 result = 0
-for s in total:
+for s in sorted(total):
     if s >= 100:
         result += total[s]
 
