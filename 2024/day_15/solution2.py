@@ -58,18 +58,104 @@ def draw_map(robot):
                 print(".", end="")
         print()
 
-def is_box_adjacent(position: tuple, direction: tuple) -> bool:
-    pass
+def get_adjacent_boxes(position: tuple, direction: tuple) -> list:
+    indexes = []
+    dy, dx = direction
+    y, x = position
+    ny, nx = y + dy, x + dx
+    if dy in [-1, 1] and dx == 0:
+        if (ny, nx) in boxes_ls:
+            indexes.append(boxes_ls.index((ny, nx)))
+        if (ny, nx) in boxes_rs:
+            indexes.append(boxes_rs.index((ny, nx)))
+        if indexes:
+            to_check = indexes.copy()
+            flag = True
+            while to_check:
+                i = to_check.pop(0)
+                y1, x1 = boxes_ls[i]
+                y2, x2 = boxes_rs[i]
+                ny1, nx1 = y1 + dy, x1 + dx
+                ny2, nx2 = y2 + dy, x2 + dx
+                if (ny1, nx1) in boxes_ls:
+                    j = boxes_ls.index((ny1, nx1))
+                    if j not in indexes:
+                        indexes.append(j)
+                        to_check.append(j)
+                if (ny1, nx1) in boxes_rs:
+                    j = boxes_rs.index((ny1, nx1))
+                    if j not in indexes:
+                        indexes.append(j)
+                        to_check.append(j)
+                if (ny2, nx2) in boxes_ls:
+                    j = boxes_ls.index((ny2, nx2))
+                    if j not in indexes:
+                        indexes.append(j)
+                        to_check.append(j)
+                if (ny2, nx2) in boxes_rs:
+                    j = boxes_rs.index((ny2, nx2))
+                    if j not in indexes:
+                        indexes.append(j)
+                        to_check.append(j)
+    elif dy == 0 and dx == 1:
+        flag = True
+        while flag:
+            if (ny, nx) in boxes_ls:
+                indexes.append(boxes_ls.index((ny, nx)))
+            else:
+                flag = False
+            ny, nx = ny, nx + 2*dx
+    elif dy == 0 and dx == -1:
+        flag = True
+        while flag:
+            if (ny, nx) in boxes_rs:
+                indexes.append(boxes_rs.index((ny, nx)))
+            else:
+                flag = False
+            ny, nx = ny, nx + 2*dx
+    return indexes
 
-def is_move_allowed(position: tuple, direction: tuple) -> bool:
-    pass
+def is_move_allowed(indexes: list, direction: tuple) -> bool:
+    dy, dx = direction
+    for i in indexes:
+        y1, x1 = boxes_ls[i]
+        y2, x2 = boxes_rs[i]
+        ny1, nx1 = y1 + dy, x1 + dx
+        ny2, nx2 = y2 + dy, x2 + dx
+        if ((ny1, nx1) in walls) or ((ny2, nx2) in walls):
+            return False
+    return True
 
-def move_boxes(position: tuple, direction: tuple) -> bool:
-    pass
+def move_boxes(indexes: list, direction: tuple):
+    dy, dx = direction
+    for i in indexes:
+        y1, x1 = boxes_ls[i]
+        y2, x2 = boxes_rs[i]
+        npl = y1 + dy, x1 + dx
+        npr = y2 + dy, x2 + dx
+        boxes_ls[i] = npl
+        boxes_rs[i] = npr
 
-draw_map(start)
+robot = start
+for move in movements:
+    ys, xs = robot
+    dy, dx = move
+    ny, nx = ys + dy, xs + dx
+    if (ny, nx) in walls:
+        continue
+    indxs = get_adjacent_boxes(robot, move)
+    if indxs:
+        if is_move_allowed(indxs, move):
+            move_boxes(indxs, move)
+            robot = ny, nx
+    else:
+        robot = ny, nx
+
+draw_map(robot)
 
 total = 0
+for box in boxes_ls:
+    y, x = box
+    total += (y * 100) + x
 
 print(total)
-
